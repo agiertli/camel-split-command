@@ -1,6 +1,8 @@
 package com.example;
 
 import jakarta.enterprise.context.ApplicationScoped;
+
+import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -18,12 +20,8 @@ public class JsonSplitRoute extends RouteBuilder {
     @ConfigProperty(name = "input.file", defaultValue = "input/sample-data.json")
     String inputFile;
 
-
-
     @Override
     public void configure() throws Exception {
-        
-   
         
         from("file://src/main/resources/input?noop=true")
             .log("Reading JSON file: ${header.CamelFileName}")
@@ -35,6 +33,12 @@ public class JsonSplitRoute extends RouteBuilder {
             
             // Split the array into individual objects
             .split(body())
+                            .delay(1500)
+
+                .process(exchange -> {
+        Integer index = exchange.getProperty(Exchange.SPLIT_INDEX, Integer.class);
+        log.info("Processing object {}", index + 1); // +1 since index starts at 0
+    })
                 .log("Processing item: ${body}")
                 .log("Item details - Name: ${body.name}, Age: ${body.age}, City: ${body.city}")
                 
